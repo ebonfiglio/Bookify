@@ -1,4 +1,5 @@
 ﻿using Bookify.Domain.Apartments;
+using Bookify.Domain.Shared;
 
 namespace Bookify.Domain.Bookings
 {
@@ -20,9 +21,24 @@ namespace Bookify.Domain.Bookings
                     Amenity.Parking => 0.01m,
                     _ => 0
                 };
-
             }
 
+            var amenitiesUpCharge = Money.Zero(currency);
+            if (percentageUpCharge > 0)
+            {
+                amenitiesUpCharge = new Money(priceForPeriod.Amount * percentageUpCharge, currency);
+            }
+
+            var totalPrice = Money.Zero();
+
+            totalPrice += priceForPeriod;
+
+            if (!apartment.CleaningFee.IsZero())
+            {
+                totalPrice += apartment.CleaningFee;
+            }
+
+            return new PricingDetails(priceForPeriod, apartment.CleaningFee, amenitiesUpCharge, totalPrice);
         }
     }
 }
