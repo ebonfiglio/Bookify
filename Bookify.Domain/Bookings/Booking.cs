@@ -46,7 +46,7 @@ namespace Bookify.Domain.Bookings
 
         public static Booking Reserve(Guid apartmentId, Guid userId, DateRange duration, DateTime utcNow, PricingDetails pricingDetails)
         {
-            Booking booking = new(Guid.NewGuid(), apartmentId, userId, duration, pricingDetails.PriceForPeriod, pricingDetails.CleaningFee, pricingDetails.AmenitiesUpCharge, pricingDetails.TotalPrice, BookingStatus.Reserved, utcNow)
+            Booking booking = new(Guid.NewGuid(), apartmentId, userId, duration, pricingDetails.PriceForPeriod, pricingDetails.CleaningFee, pricingDetails.AmenitiesUpCharge, pricingDetails.TotalPrice, BookingStatus.Reserved, utcNow);
             booking.RaiseDomainEvent(new BookingReservedDomainEvent(booking.Id));
             return booking;
         }
