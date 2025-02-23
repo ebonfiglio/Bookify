@@ -62,7 +62,7 @@ namespace Bookify.Domain.Bookings
         {
             if (Status != BookingStatus.Reserved)
             {
-                return Result.Failure(BookingErrors.NotPending);
+                return Result.Failure(BookingErrors.NotReserved);
             }
 
             Status = BookingStatus.Confirmed;
@@ -77,7 +77,7 @@ namespace Bookify.Domain.Bookings
         {
             if (Status != BookingStatus.Reserved)
             {
-                return Result.Failure(BookingErrors.NotPending);
+                return Result.Failure(BookingErrors.NotReserved);
             }
 
             Status = BookingStatus.Rejected;
