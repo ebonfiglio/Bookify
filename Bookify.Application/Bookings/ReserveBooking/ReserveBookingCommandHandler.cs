@@ -38,7 +38,7 @@ namespace Bookify.Application.Bookings.ReserveBooking
                 return Result.Failure<Guid>(ApartmentErrors.NotFound);
             }
 
-            var duration = DateRange.Create(request.Startdate, request.EndDate);
+            var duration = DateRange.Create(request.StartDate, request.EndDate);
 
             if (await _bookingRepository.IsOverlappingAsync(apartment, duration, cancellationToken))
             {
@@ -54,7 +54,7 @@ namespace Bookify.Application.Bookings.ReserveBooking
 
             _bookingRepository.Add(booking);
 
-            await _unitOfWork.SaveShangesAsync(cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return booking.Id;
         }
