@@ -13,7 +13,7 @@ namespace Bookify.Application.Bookings.ReserveBooking
         private readonly IEmailService _emailService = emailService;
         public async Task Handle(BookingReservedDomainEvent notification, CancellationToken cancellationToken)
         {
-            var booking = await _bookingRespository.GetByIdAsybc(notification.BookingId, cancellationToken);
+            var booking = await _bookingRespository.GetByIdAsync(notification.BookingId, cancellationToken);
 
             if (booking is null)
             {
