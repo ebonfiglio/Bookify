@@ -2,11 +2,11 @@
 
 namespace Bookify.Domain.Bookings
 {
-    public interface IBookingRespository
+    public interface IBookingRepository
     {
         void Add(Booking booking);
         Task<bool> IsOverlappingAsync(Apartment apartment, DateRange dateRange, CancellationToken cancellationToken);
 
-        Task<Booking> GetByIdAsybc(Guid id, CancellationToken cancellationToken);
+        Task<Booking> GetByIdAsync(Guid id, CancellationToken cancellationToken);
     }
 }

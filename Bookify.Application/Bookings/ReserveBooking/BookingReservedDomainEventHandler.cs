@@ -6,9 +6,9 @@ using MediatR;
 
 namespace Bookify.Application.Bookings.ReserveBooking
 {
-    internal sealed class BookingReservedDomainEventHandler(IBookingRespository bookingRespository, IUserRepository userRepository, IEmailService emailService) : INotificationHandler<BookingReservedDomainEvent>
+    internal sealed class BookingReservedDomainEventHandler(IBookingRepository bookingRespository, IUserRepository userRepository, IEmailService emailService) : INotificationHandler<BookingReservedDomainEvent>
     {
-        private readonly IBookingRespository _bookingRespository = bookingRespository;
+        private readonly IBookingRepository _bookingRespository = bookingRespository;
         private readonly IUserRepository _userRepository = userRepository;
         private readonly IEmailService _emailService = emailService;
         public async Task Handle(BookingReservedDomainEvent notification, CancellationToken cancellationToken)

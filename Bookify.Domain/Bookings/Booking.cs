@@ -24,7 +24,7 @@ namespace Bookify.Domain.Bookings
             Duration = duration;
             PriceForPeriod = priceForPeriod;
             CleaningFee = cleaningFee;
-            AmentityUpCharge = amentityUpCharge;
+            AmenitiesUpCharge = amentityUpCharge;
             TotalPrice = totalPrice;
             Status = status;
             CreatedOnUtc = createdOnUtc;
@@ -35,7 +35,7 @@ namespace Bookify.Domain.Bookings
         public DateRange Duration { get; private set; }
         public Money PriceForPeriod { get; private set; }
         public Money CleaningFee { get; private set; }
-        public Money AmentityUpCharge { get; private set; }
+        public Money AmenitiesUpCharge { get; private set; }
         public Money TotalPrice { get; private set; }
         public BookingStatus Status { get; private set; }
 
