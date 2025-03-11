@@ -1,3 +1,4 @@
+using Bookify.API.Extensions;
 using Bookify.Application;
 using Bookify.Infrastructure;
 
@@ -21,9 +22,15 @@ namespace Bookify.API
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
+
+                //app.ApplyMigrations();
+
+                //app.SeedData();
             }
 
             app.UseHttpsRedirection();
+
+            app.UseCustomExceptionHandler();
 
             app.MapControllers();
 

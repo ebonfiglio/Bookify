@@ -21,6 +21,11 @@ namespace Bookify.Domain.Apartments
             CleaningFee = cleaningFee;
             Amenities = amenities;
         }
+
+        private Apartment()
+        {
+
+        }
         public Guid Id { get; private set; }
         public Name Name { get; private set; }
         public Description Description { get; private set; }
