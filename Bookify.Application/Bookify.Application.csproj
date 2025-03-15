@@ -18,4 +18,10 @@
     <ProjectReference Include="..\Bookify.Domain\Bookify.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Abstractions\Authentication\" />
+    <Folder Include="Users\LoginUser\" />
+    <Folder Include="Users\RegisterUser\" />
+  </ItemGroup>
+
 </Project>

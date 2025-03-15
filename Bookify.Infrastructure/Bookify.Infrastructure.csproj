@@ -21,4 +21,8 @@
     <ProjectReference Include="..\Bookify.Application\Bookify.Application.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Authentication\Models\" />
+  </ItemGroup>
+
 </Project>
