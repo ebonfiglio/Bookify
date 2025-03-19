@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <Folder Include="Authentication\Models\" />
+    <Folder Include="Authorization\" />
   </ItemGroup>
 
 </Project>

@@ -22,7 +22,7 @@ namespace Bookify.Infrastructure.Repositories
                 .FirstOrDefaultAsync(user => user.Id == id, cancellationToken);
         }
 
-        public void Add(T entity)
+        public virtual void Add(T entity)
         {
             DbContext.Add(entity);
         }
