@@ -1,15 +1,22 @@
 ﻿using Bookify.Application.Bookings.GetBooking;
 using Bookify.Application.Bookings.ReserveBooking;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Bookify.API.Controllers.Bookings
 {
-    [Route("api/bookings")]
+    [Authorize]
     [ApiController]
-    public class BookingsController(ISender sender) : ControllerBase
+    [Route("api/bookings")]
+    public class BookingsController : ControllerBase
     {
-        private readonly ISender _sender = sender;
+        private readonly ISender _sender;
+
+        public BookingsController(ISender sender)
+        {
+            _sender = sender;
+        }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetBooking(Guid id, CancellationToken cancellationToken)
@@ -22,9 +29,15 @@ namespace Bookify.API.Controllers.Bookings
         }
 
         [HttpPost]
-        public async Task<IActionResult> ReserveBooking(ReserveBookingRequest request, CancellationToken cancellationToken)
+        public async Task<IActionResult> ReserveBooking(
+            ReserveBookingRequest request,
+            CancellationToken cancellationToken)
         {
-            var command = new ReserveBookingCommand(request.ApartmentId, request.UserId, request.StartDate, request.EndDate);
+            var command = new ReserveBookingCommand(
+                request.ApartmentId,
+                request.UserId,
+                request.StartDate,
+                request.EndDate);
 
             var result = await _sender.Send(command, cancellationToken);
 
