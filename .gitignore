@@ -362,3 +362,5 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /.containers/database
+/Bookify.API/appsettings.Development.json
+/Bookify.Bff/appsettings.Development.json
