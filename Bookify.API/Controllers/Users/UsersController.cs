@@ -1,4 +1,5 @@
-﻿using Bookify.Application.Users.LogInUser;
+﻿using Bookify.Application.Users.GetLoggedInUser;
+using Bookify.Application.Users.LogInUser;
 using Bookify.Application.Users.RegisterUser;
 using Bookify.Infrastructure.Authorization;
 using MediatR;

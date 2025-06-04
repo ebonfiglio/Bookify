@@ -65,7 +65,6 @@ namespace Bookify.Infrastructure
 
             SqlMapper.AddTypeHandler(new DateOnlyTypeHandler());
         }
-
         private static void AddAuthentication(IServiceCollection services, IConfiguration configuration)
         {
             services
@@ -86,7 +85,7 @@ namespace Bookify.Infrastructure
 
                 httpClient.BaseAddress = new Uri(keycloakOptions.AdminUrl);
             })
-            .AddHttpMessageHandler<AdminAuthorizationDelegatingHandler>();
+                .AddHttpMessageHandler<AdminAuthorizationDelegatingHandler>();
 
             services.AddHttpClient<IJwtService, JwtService>((serviceProvider, httpClient) =>
             {
@@ -94,7 +93,12 @@ namespace Bookify.Infrastructure
 
                 httpClient.BaseAddress = new Uri(keycloakOptions.TokenUrl);
             });
+
+            services.AddHttpContextAccessor();
+
+            services.AddScoped<IUserContext, UserContext>();
         }
+
 
         private static void AddAuthorization(IServiceCollection services)
         {

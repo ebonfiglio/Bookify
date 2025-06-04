@@ -23,7 +23,7 @@ namespace Bookify.API
             {
                 app.MapOpenApi();
 
-                //app.ApplyMigrations();
+                app.ApplyMigrations();
 
                 //app.SeedData();
             }
