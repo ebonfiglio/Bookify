@@ -364,3 +364,4 @@ FodyWeavers.xsd
 /.containers/database
 /Bookify.API/appsettings.Development.json
 /Bookify.Bff/appsettings.Development.json
+/.containers/identity/h2/keycloakdb.mv.db
