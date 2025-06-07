@@ -1,7 +1,11 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
+using System.Net.Http.Headers;
+using System.Security.Claims;
+using Yarp.ReverseProxy.Transforms;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,7 +20,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddCookie(options =>
 {
-    options.Cookie.Name = "Bookify.Bff.Auth";
+    options.Cookie.Name = "bookify_auth";
     options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Lax;
@@ -76,6 +80,43 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+builder.Services.AddReverseProxy()
+    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"))
+    .AddTransforms(transformBuilder =>
+    {
+        transformBuilder.AddRequestTransform(async transformContext =>
+        {
+            var accessToken = await transformContext.HttpContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken);
+            if (!string.IsNullOrEmpty(accessToken))
+            {
+                transformContext.ProxyRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            }
+        });
+    });
+
+var corsAllowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+if (corsAllowedOrigins.Length == 0 && builder.Environment.IsDevelopment()) // Fallback for dev if not configured
+{
+    corsAllowedOrigins = new[] { "https://localhost:5001", "http://localhost:5000" }; // Default Blazor WASM ports
+}
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigin", policy =>
+    {
+        policy.WithOrigins(corsAllowedOrigins)
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
+});
+
+builder.Services.AddHttpClient("BookifyAPI", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"] ?? throw new InvalidOperationException("ApiSettings:BaseUrl is not configured."));
+});
+
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
@@ -87,30 +128,90 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+else
+{
+    app.UseExceptionHandler("/Error");
+    app.UseHsts();
+}
+
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+app.UseRouting();
 
-app.MapGet("/weatherforecast", () =>
+app.UseCors("AllowSpecificOrigin");
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Minimal API Endpoints for Authentication
+app.MapGet("/auth/login", (string? returnUrl, HttpContext context) =>
 {
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+    var redirectUri = !string.IsNullOrEmpty(returnUrl) ? returnUrl : "/";
+    return Results.Challenge(
+        new AuthenticationProperties { RedirectUri = redirectUri },
+        new[] { OpenIdConnectDefaults.AuthenticationScheme });
+}).AllowAnonymous();
+
+// Logout endpoint - signs out from cookie and Keycloak
+app.MapGet("/auth/logout", async (HttpContext context) =>
+{
+    await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+    var props = new AuthenticationProperties { RedirectUri = "/" };
+    await context.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme, props);
+}).RequireAuthorization();
+
+// Get current user endpoint - extracts from claims
+app.MapGet("/auth/user", (ClaimsPrincipal user) =>
+{
+    if (user.Identity?.IsAuthenticated != true)
+    {
+        return Results.Unauthorized();
+    }
+
+    return Results.Ok(new
+    {
+        IsAuthenticated = true,
+        Name = user.FindFirst(ClaimTypes.Name)?.Value ?? user.FindFirst("preferred_username")?.Value,
+        Email = user.FindFirst(ClaimTypes.Email)?.Value,
+        UserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+        Claims = user.Claims.Select(c => new { c.Type, c.Value })
+    });
+}).RequireAuthorization();
+
+// Register endpoint - forwards to your existing API endpoint
+app.MapPost("/auth/register", async (RegisterUserDto request, IHttpClientFactory httpClientFactory) =>
+{
+    var httpClient = httpClientFactory.CreateClient("BookifyAPI");
+
+    // Forward the registration request to your existing API endpoint
+    var response = await httpClient.PostAsJsonAsync("/api/users/register", request);
+
+    if (!response.IsSuccessStatusCode)
+    {
+        var errorContent = await response.Content.ReadAsStringAsync();
+        return Results.Problem(
+            detail: errorContent,
+            statusCode: (int)response.StatusCode,
+            title: "Registration failed");
+    }
+
+    // If registration was successful, you might want to return the result
+    // or redirect to login
+    var result = await response.Content.ReadFromJsonAsync<object>();
+    return Results.Ok(new
+    {
+        Success = true,
+        Result = result,
+        Message = "Registration successful. Please log in."
+    });
+}).AllowAnonymous();
 
 app.Run();
 
-internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+// Define your DTO matching your API's RegisterUserRequest
+internal record RegisterUserDto(string Email, string FirstName, string LastName, string Password);

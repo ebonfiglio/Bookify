@@ -1,0 +1,62 @@
+@page "/me"
+@attribute [Authorize]
+@using Microsoft.AspNetCore.Components.Authorization
+@using Bookify.UI.Auth
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>My Profile</PageTitle>
+
+<h1>My Profile</h1>
+
+@if (userInfo == null)
+{
+    <p>Loading your information...</p>
+}
+else
+{
+    <div class="card">
+        <div class="card-header">
+            User Information
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">@userInfo.Name</h5>
+            <p class="card-text">Email: @userInfo.Email</p>
+            <p class="card-text">User ID: @userInfo.UserId</p>
+        </div>
+    </div>
+    
+    <h3 class="mt-4">Claims</h3>
+    @if (userInfo.Claims?.Any() == true)
+    {
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var claim in userInfo.Claims)
+                {
+                    <tr>
+                        <td>@claim.Type</td>
+                        <td>@claim.Value</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>No additional claims available.</p>
+    }
+}
+
+@code {
+    private UserInfo? userInfo;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        userInfo = await ((BookifyAuthProvider)AuthStateProvider).GetUserInfoAsync();
+    }
+}

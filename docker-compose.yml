@@ -32,3 +32,25 @@ services:
       - ./.files/bookify-realm-export.json:/opt/keycloak/data/import/realm.json
     ports:
       - 18080:8080
+
+  bookify.bff:
+    image: ${DOCKER_REGISTRY-}bookifybff
+    container_name: Bookify.Bff
+    build:
+      context: .
+      dockerfile: Bookify.Bff/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Authentication__Keycloak__Authority=http://bookify-idp:8080/realms/bookify
+      - Authentication__Keycloak__ClientId=bookify-bff-client
+      - Authentication__Keycloak__ClientSecret=your-client-secret-here
+      - Authentication__Keycloak__RequireHttpsMetadata=false
+      - ApiSettings__BaseUrl=http://bookify.api:8080
+      - ReverseProxy__Clusters__bookify-api__Destinations__bookify-api-destination__Address=http://bookify.api:8080
+      - Cors__AllowedOrigins__0=https://localhost:5001
+      - Cors__AllowedOrigins__1=http://localhost:5000
+    ports:
+      - 7240:8080
+    depends_on:
+      - bookify.api
+      - bookify-idp

@@ -1,0 +1,32 @@
+@page "/login"
+@using System.ComponentModel.DataAnnotations
+@inject NavigationManager Navigation
+@inject HttpClient HttpClient
+
+<PageTitle>Login</PageTitle>
+
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <h1>Login</h1>
+        
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+        
+        <p>Click the button below to log in:</p>
+        
+        <button class="btn btn-primary" @onclick="LoginUser">Login</button>
+        
+        <p class="mt-3">Don't have an account? <a href="register">Register</a></p>
+    </div>
+</div>
+
+@code {
+    private string? errorMessage;
+    
+    private void LoginUser()
+    {
+        Navigation.NavigateTo("/auth/login?returnUrl=/", true);
+    }
+}

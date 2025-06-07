@@ -1,0 +1,128 @@
+@page "/register"
+@using System.ComponentModel.DataAnnotations
+@inject NavigationManager Navigation
+@inject HttpClient HttpClient
+
+<PageTitle>Register</PageTitle>
+
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <h1>Register</h1>
+        
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+        
+        @if (isSuccess)
+        {
+            <div class="alert alert-success">
+                Registration successful! You can now <a href="login">login</a>.
+            </div>
+        }
+        else
+        {
+            <EditForm Model="@registerModel" OnSubmit="@HandleRegistration">
+                <DataAnnotationsValidator />
+                
+                <div class="form-group mb-3">
+                    <label for="firstName">First Name</label>
+                    <InputText id="firstName" @bind-Value="registerModel.FirstName" class="form-control" />
+                    <ValidationMessage For="@(() => registerModel.FirstName)" />
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label for="lastName">Last Name</label>
+                    <InputText id="lastName" @bind-Value="registerModel.LastName" class="form-control" />
+                    <ValidationMessage For="@(() => registerModel.LastName)" />
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label for="email">Email</label>
+                    <InputText id="email" @bind-Value="registerModel.Email" class="form-control" />
+                    <ValidationMessage For="@(() => registerModel.Email)" />
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label for="password">Password</label>
+                    <InputText id="password" type="password" @bind-Value="registerModel.Password" class="form-control" />
+                    <ValidationMessage For="@(() => registerModel.Password)" />
+                </div>
+                
+                <button type="submit" class="btn btn-primary" disabled="@isRegistering">
+                    @if (isRegistering)
+                    {
+                        <span>Registering...</span>
+                    }
+                    else
+                    {
+                        <span>Register</span>
+                    }
+                </button>
+                
+                <p class="mt-3">Already have an account? <a href="login">Login</a></p>
+            </EditForm>
+        }
+    </div>
+</div>
+
+@code {
+    private RegisterModel registerModel = new();
+    private bool isRegistering;
+    private bool isSuccess;
+    private string? errorMessage;
+    
+    private async Task HandleRegistration()
+    {
+        isRegistering = true;
+        errorMessage = null;
+        
+        try
+        {
+            var response = await HttpClient.PostAsJsonAsync("/auth/register", registerModel);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                isSuccess = true;
+            }
+            else
+            {
+                var error = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+                errorMessage = error?.Detail ?? "Registration failed. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "An error occurred: " + ex.Message;
+        }
+        
+        isRegistering = false;
+    }
+    
+    public class RegisterModel
+    {
+        [Required]
+        [Display(Name = "First Name")]
+        public string FirstName { get; set; } = string.Empty;
+        
+        [Required]
+        [Display(Name = "Last Name")]
+        public string LastName { get; set; } = string.Empty;
+        
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+        
+        [Required]
+        [StringLength(100, ErrorMessage = "Password must be at least {2} characters long.", MinimumLength = 6)]
+        public string Password { get; set; } = string.Empty;
+    }
+    
+    public class ProblemDetails
+    {
+        public string? Type { get; set; }
+        public string? Title { get; set; }
+        public int? Status { get; set; }
+        public string? Detail { get; set; }
+    }
+}

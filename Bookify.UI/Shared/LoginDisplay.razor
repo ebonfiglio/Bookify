@@ -1,0 +1,26 @@
+@using Bookify.UI.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+
+<AuthorizeView>
+    <Authorized>
+        <div class="d-flex align-items-center">
+            <span class="me-2">Hello, @context.User.Identity?.Name!</span>
+            <button class="btn btn-link nav-link" @onclick="Logout">Logout</button>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <a href="login" class="nav-link">Login</a>
+        <a href="register" class="nav-link">Register</a>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private async Task Logout()
+    {
+        Navigation.NavigateTo("/auth/logout", true);
+        
+        ((BookifyAuthProvider)AuthStateProvider).NotifyUserLogout();
+    }
+}
