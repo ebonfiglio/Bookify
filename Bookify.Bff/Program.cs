@@ -35,7 +35,12 @@ builder.Services.AddAuthentication(options =>
     options.SaveTokens = keycloakConfig.GetValue<bool?>("SaveTokens") ?? true;
     options.GetClaimsFromUserInfoEndpoint = keycloakConfig.GetValue<bool?>("GetClaimsFromUserInfoEndpoint") ?? true;
     options.RequireHttpsMetadata = keycloakConfig.GetValue<bool?>("RequireHttpsMetadata") ?? !builder.Environment.IsDevelopment();
-    options.CallbackPath = "/signin-oidc";
+
+    options.MetadataAddress = $"{options.Authority}/.well-known/openid-configuration";
+
+    // Get the public-facing URL for redirects, or fall back to the internal one
+    string publicFacingAuthority = keycloakConfig["PublicFacingAuthority"] ?? options.Authority;
+
     options.Scope.Clear();
     var configuredScopes = keycloakConfig.GetSection("Scope").Get<string[]>();
     if (configuredScopes != null)
@@ -61,18 +66,10 @@ builder.Services.AddAuthentication(options =>
 
     options.Events = new OpenIdConnectEvents
     {
-        OnRedirectToIdentityProvider = context =>
-        {
-            if (context.Properties.Items.TryGetValue("error_uri", out var errorUri) && !string.IsNullOrEmpty(errorUri))
-            {
-                context.ProtocolMessage.SetParameter("error_uri", errorUri);
-            }
-            return Task.CompletedTask;
-        },
         OnRedirectToIdentityProviderForSignOut = context =>
         {
             // Customize logout redirect if needed, e.g., to include id_token_hint
-            var logoutUrl = $"{options.Authority}/protocol/openid-connect/logout";
+            var logoutUrl = $"{publicFacingAuthority}/protocol/openid-connect/logout";
             var postLogoutRedirectUri = context.Properties.RedirectUri;
             if (!string.IsNullOrEmpty(postLogoutRedirectUri))
             {

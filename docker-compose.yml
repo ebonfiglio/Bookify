@@ -5,8 +5,30 @@ services:
     build:
       context: .
       dockerfile: Bookify.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_URLS=http://+:8080;
+      # Database connections
+      - ConnectionStrings__Database=Host=bookify-db;Port=5432;Database=bookify;Username=postgres;Password=postgres;
+      # Authentication settings
+      - Authentication__Audience=account
+      - Authentication__ValidIssuer=http://bookify-idp:8080/realms/bookify
+      - Authentication__MetadataUrl=http://bookify-idp:8080/realms/bookify/.well-known/openid-configuration
+      - Authentication__RequireHttpsMetadata=false
+      # Keycloak settings
+      - Keycloak__BaseUrl=http://bookify-idp:8080
+      - Keycloak__AdminUrl=http://bookify-idp:8080/admin/realms/bookify/
+      - Keycloak__TokenUrl=http://bookify-idp:8080/realms/bookify/protocol/openid-connect/token
+      - Keycloak__AdminClientId=bookify-admin-client
+      - Keycloak__AdminClientSecret=UZDmbNxWmV4TlpaCRcju6pMRsyuV3er1
+      - Keycloak__AuthClientId=bookify-auth-client
+      - Keycloak__AuthClientSecret=3E3yvXaYppoYBF3Ir6DgtEzADKKzSurZ
+    ports:
+      - "7182:8080"
     depends_on:
       - bookify-db
+      - bookify-idp
 
   bookify-db:
     image: postgres:latest
@@ -40,17 +62,33 @@ services:
       context: .
       dockerfile: Bookify.Bff/Dockerfile
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_URLS=http://+:8080;
+      # Authentication settings
       - Authentication__Keycloak__Authority=http://bookify-idp:8080/realms/bookify
+      - Authentication__Keycloak__PublicFacingAuthority=http://localhost:18080/realms/bookify
       - Authentication__Keycloak__ClientId=bookify-bff-client
-      - Authentication__Keycloak__ClientSecret=your-client-secret-here
+      - Authentication__Keycloak__ClientSecret=XK7YkuC5Eu3CQOQuOoDW1AmkvjZLC5iS
       - Authentication__Keycloak__RequireHttpsMetadata=false
+      - Authentication__Keycloak__ResponseType=code
+      - Authentication__Keycloak__SaveTokens=true
+      - Authentication__Keycloak__GetClaimsFromUserInfoEndpoint=true
+      # API settings
       - ApiSettings__BaseUrl=http://bookify.api:8080
-      - ReverseProxy__Clusters__bookify-api__Destinations__bookify-api-destination__Address=http://bookify.api:8080
+      # Reverse proxy settings
+      - ReverseProxy__Routes__api-route__ClusterId=api-cluster
+      - ReverseProxy__Routes__api-route__Match__Path=/api/{**catch-all}
+      - ReverseProxy__Routes__api-route__Transforms__0__PathRemovePrefix=/api
+      - ReverseProxy__Clusters__api-cluster__Destinations__api-destination__Address=http://bookify.api:8080
+      - ReverseProxy__Clusters__api-cluster__HttpClient__DangerousAcceptAnyServerCertificate=true
+      # CORS settings
       - Cors__AllowedOrigins__0=https://localhost:5001
       - Cors__AllowedOrigins__1=http://localhost:5000
+      - Cors__AllowedOrigins__2=http://localhost:5154
+      - Cors__AllowedOrigins__3=https://localhost:7154
     ports:
-      - 7240:8080
+      - "7240:8080"
     depends_on:
       - bookify.api
       - bookify-idp
